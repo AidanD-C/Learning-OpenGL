@@ -10,7 +10,8 @@ include_directories(
 
 link_directories("C:/Users/dcaid/Git repos/cpp_libs/opengl_libs/lib")
 
-file(GLOB SOURCES "src/*.cpp" "src/*.c")
-add_executable(program ${SOURCES})
+add_executable(main src/main.cpp src/gl.c)
+add_executable(exercises src/exercises.cpp src/gl.c)
 
-target_link_libraries(program glfw3 opengl32)
+target_link_libraries(main glfw3 opengl32)
+target_link_libraries(exercises glfw3 opengl32)

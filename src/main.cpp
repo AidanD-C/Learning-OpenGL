@@ -14,10 +14,16 @@ void processInput(GLFWwindow *window)
 }
 
 float vertices[] = {
-                    -0.5f, -0.5f, 0.0f,
-                    0.5f, -0.5f, 0.0f,
-                    0.0f, 0.5f, 0.0f
-                    };
+0.5f, 0.5f, 0.0f, // top right
+0.5f, -0.5f, 0.0f, // bottom right
+-0.5f, -0.5f, 0.0f, // bottom left
+-0.5f, 0.5f, 0.0f // top left
+};
+
+unsigned int indices[] = { // note that we start from 0!
+0, 1, 3, // first triangle
+1, 2, 3 // second triangle
+};
 
 // source code for vertex shader
 const char *vertexShaderSource = "#version 330 core\n"
@@ -44,12 +50,6 @@ int main()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     GLFWwindow* window = glfwCreateWindow(800, 600, "LearnOpenGL", NULL, NULL);
-    if (window == NULL)
-    {
-        std::cout << "Failed to create GLFW window" << std::endl;
-        glfwTerminate();
-        return -1;
-    }
     glfwMakeContextCurrent(window);
     
     // initializing GLAD
@@ -69,17 +69,6 @@ int main()
     glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
     glCompileShader(vertexShader);
 
-    // chekcing for any compile errors when setting up vertex shader
-    int success;
-    char infoLog[512];
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if(!success)
-    {
-        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" <<
-        infoLog << std::endl;
-    }
-
     // setting up fragment shader
     unsigned int fragmentShader;
     fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -93,15 +82,6 @@ int main()
     glAttachShader(shaderProgram, fragmentShader);
     glLinkProgram(shaderProgram);
 
-    // checking for any linking errors when creating the shader program
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if(!success) 
-    {
-        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        std::cout << "ERROR::PROGRAM::SHADER_PROGRAM::LINKING_FAILED\n" <<
-        infoLog << std::endl;
-    }
-
     // telling OpenGL to use the shader program
     glUseProgram(shaderProgram);
 
@@ -112,17 +92,25 @@ int main()
     // creating a vertex array object which makes it more convenient to switch between different vertex data and attribute configurations. Also just makes binding vertex buffers easier.
     unsigned int VAO;
     unsigned int VBO;
+    unsigned int EBO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
+    glGenBuffers(1, &EBO);
 
     // 1. bind Vertex Array Object
     glBindVertexArray(VAO);
     // 2. copy our vertices array in a buffer for OpenGL to use
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
     // 3. then set our vertex attributes pointers
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
+
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     
     // render loop
     while(!glfwWindowShouldClose(window))
@@ -134,8 +122,7 @@ int main()
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         glUseProgram(shaderProgram);
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
         // check and call events and swap the buffers
         glfwSwapBuffers(window);
